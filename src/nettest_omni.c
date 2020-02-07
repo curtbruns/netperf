@@ -5586,7 +5586,38 @@ recv_omni()
 	 attributes across an accept() call. Including this goes
 	 against my better judgement :( raj 11/95 */
 
+      // cebruns - needed for Linux to set PRIORITY and IP_TOS fields on newly created socket from "accept"
+      fprintf(where, "Omni_req->socket_prio: %d\n", omni_request->socket_prio);
+      fprintf(where,"Omni_req->socket_tos: %d\n", omni_request->socket_tos);
       kludge_socket_options(data_socket);
+      // cebruns - kludge the IP_TOS and the Priority!
+#if defined (IP_TOS) || defined(IPV6_TCLASS)
+  if (omni_request->socket_tos > 0) {
+    fprintf(where, "ceb - kludge : tos: %d\n", omni_request->socket_tos);
+    if (setsockopt(data_socket,
+                   IPPROTO_IP,
+                   IP_TOS,
+                   (const char *)&omni_request->socket_tos,sizeof(omni_request->socket_tos)) == SOCKET_ERROR) {
+      printf("ERROR setting kludge tos: kludge tos returned: %d\n", remote_socket_tos);
+    }
+  }
+#endif
+
+  #if defined(SO_PRIORITY)
+  if (omni_request->socket_prio >= 0) {
+    fprintf(where, "ceb - kludge: remote_socket_prio: %d\n", omni_request->socket_prio);
+    if (setsockopt(data_socket,
+                  SOL_SOCKET,
+                  SO_PRIORITY,
+                  &omni_request->socket_prio,
+                  sizeof(omni_request->socket_prio)) == SOCKET_ERROR) {
+      fprintf(where,
+             "netperf: kludge: so_priority: errno %d\n",
+             errno);
+      fflush(where);
+    }
+  }
+#endif // Priority
 
 #endif /* KLUDGE_SOCKET_OPTIONS */
 

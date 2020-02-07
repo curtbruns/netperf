@@ -1491,6 +1491,13 @@ create_data_socket(struct addrinfo *res)
   }
 #endif
 
+// cebruns - move to here - if SO_PRIORITY already set then TOS doesn't take
+#if defined (IP_TOS) || defined(IPV6_TCLASS)
+  if (local_socket_tos > 0)
+    local_socket_tos = set_socket_tos(temp_socket,res->ai_family, local_socket_tos);
+#endif
+
+
 #if defined(SO_PRIORITY)
   if (local_socket_prio >= 0) {
     if (setsockopt(temp_socket,
@@ -1515,11 +1522,6 @@ create_data_socket(struct addrinfo *res)
   }
 #else
   local_socket_prio = -3;
-#endif
-
-#if defined (IP_TOS) || defined(IPV6_TCLASS)
-  if (local_socket_tos > 0)
-    local_socket_tos = set_socket_tos(temp_socket,res->ai_family, local_socket_tos);
 #endif
 
   /* some platforms can be told to set a rate on a socket */
@@ -1568,7 +1570,7 @@ kludge_socket_options(int temp_socket)
 
 #ifdef TCP_NODELAY
   if (loc_nodelay) {
-    one = 1;
+    int one = 1;
     if(setsockopt(temp_socket,
 		  getprotobyname("tcp")->p_proto,
 		  TCP_NODELAY,

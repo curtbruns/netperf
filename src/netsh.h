@@ -4,6 +4,7 @@
 
 /* libraried performance include file 				*/
 /* the define NOPERFEXTERN tels us not to re-define all the 	*/
+#define KLUDGE_SOCKET_OPTIONS
 
 /* defines and defaults */
 #define		HOSTNAMESIZE 	255
